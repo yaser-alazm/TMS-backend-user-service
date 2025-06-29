@@ -1,0 +1,36 @@
+FROM node:20-alpine
+
+# Install necessary packages and nodemon for development
+RUN apk add --no-cache openssl libc6-compat
+RUN npm install -g nodemon
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig*.json ./
+
+# Install dependencies (including dev dependencies)
+RUN npm install
+
+# Copy source code and configuration
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nestjs -u 1001
+RUN chown -R nestjs:nodejs /app
+USER nestjs
+
+# Expose port
+EXPOSE 4001
+
+# Environment variables
+ENV NODE_ENV=development
+ENV PORT=4001
+
+# Start in development mode with hot reload
+CMD ["npm", "run", "start:dev"]
