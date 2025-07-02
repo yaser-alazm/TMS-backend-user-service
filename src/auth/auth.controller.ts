@@ -25,4 +25,9 @@ export class AuthController {
   getProfile(@Request() req: RequestWithJWTUser) {
     return req.user;
   }
+
+  @Get('test')
+  getTest() {
+    return 'Test test';
+  }
 }
