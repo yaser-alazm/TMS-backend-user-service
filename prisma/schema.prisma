@@ -21,6 +21,8 @@ model User {
   roles       Role[]
   permissions Permission[]
   lastLogin   DateTime?
+  refreshTokens     RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Role {
@@ -41,4 +43,22 @@ model Permission {
   updatedAt   DateTime  @updatedAt
   roles       Role[]
   users       User[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
