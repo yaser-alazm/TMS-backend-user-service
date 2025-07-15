@@ -1,41 +1,14 @@
-import {
-  IsDateString,
-  IsEmail,
-  IsOptional,
-  IsString,
-  MinLength,
-} from 'class-validator';
+import { z } from 'zod';
 
-export class UpdateUserDto {
-  @IsOptional()
-  @IsString()
-  username?: string;
+export const UpdateUserSchema = z.object({
+  username: z.string().optional(),
+  email: z.string().email().optional(),
+  password: z.string().min(8).optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  roles: z.array(z.string()).optional(),
+  isActive: z.boolean().optional(),
+  lastLogin: z.coerce.date().optional(),
+});
 
-  @IsOptional()
-  @IsEmail()
-  email?: string;
-
-  @IsOptional()
-  @IsString()
-  @MinLength(8)
-  password?: string;
-
-  @IsOptional()
-  @IsString()
-  firstName?: string;
-
-  @IsOptional()
-  @IsString()
-  lastName?: string;
-
-  @IsOptional()
-  @IsString({ each: true })
-  roles?: string[];
-
-  @IsOptional()
-  isActive?: boolean;
-
-  @IsOptional()
-  @IsDateString()
-  lastLogin?: Date;
-}
+export type UpdateUserDto = z.infer<typeof UpdateUserSchema>;
