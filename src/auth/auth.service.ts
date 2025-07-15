@@ -12,12 +12,7 @@ import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
-import {
-  JwtPayload,
-  UserWithRoles,
-  UserWithRelations,
-  TokenResponse,
-} from './types';
+import { JwtPayload, UserWithRelations, TokenResponse } from './types';
 
 @Injectable()
 export class AuthService {
@@ -324,7 +319,7 @@ export class AuthService {
   }
 
   private async generateTokens(
-    user: UserWithRoles | UserWithRelations,
+    user: UserWithRelations,
   ): Promise<TokenResponse> {
     try {
       const payload: JwtPayload = {

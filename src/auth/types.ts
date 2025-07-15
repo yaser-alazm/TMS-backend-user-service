@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { User, Role, Permission } from '../../generated/prisma';
+import { User, Role, Permission } from '@prisma/client';
 
 export interface RequestWithJWTUser extends Request {
   user: {
@@ -17,14 +17,9 @@ export interface JwtPayload {
   exp?: number;
 }
 
-export type UserWithRoles = User & {
-  roles: Role[];
-  permissions?: Permission[];
-};
-
 export type UserWithRelations = User & {
   roles: Role[];
-  permissions: Permission[];
+  permissions?: Permission[];
 };
 
 export interface AuthResponse {
