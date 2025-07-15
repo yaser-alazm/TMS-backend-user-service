@@ -1,0 +1,100 @@
+### Variables
+@baseUrl = http://tms.dev/api/user
+@accessToken = {{login.response.body.access_token}}
+
+###
+### User Auth Endpoints
+###
+
+
+### Register User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "yaser-az",
+  "email": "yaser@example.com",
+  "password": "Password123!",
+  "firstName": "Yaser",
+  "lastName": "Alazm"
+}
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "yaser-az",
+  "password": "Password123!"
+}
+
+### Get Profile (Protected)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+
+### Forgot Password
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "test2@example.com"
+}
+
+### Change Password
+POST {{baseUrl}}/auth/change-password
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Password123!",
+  "newPassword": "NewPassword456!"
+}
+
+###
+### Users Endpoints
+###
+
+### Get All Users
+GET {{baseUrl}}/
+Authorization: Bearer {{accessToken}}
+
+### Get User by ID
+GET {{baseUrl}}/a7137dca-be78-4b4f-a8c4-2061d2f45d4a
+Authorization: Bearer {{accessToken}}
+
+### Create New User
+POST {{baseUrl}}/
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "username": "yaser-alazm",
+  "email": "yaser2@example.com",
+  "password": "Password123!",
+  "firstName": "Yaser",
+  "lastName": "Alazm",
+  "roles": ["admin"]
+}
+
+### Update User
+PUT {{baseUrl}}/a7137dca-be78-4b4f-a8c4-2061d2f45d4a
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "email": "yaser.alazm@example.com",
+  "firstName": "Yasser"
+}
+
+### Delete User
+DELETE {{baseUrl}}/1234-5678-9012
+Authorization: Bearer {{accessToken}}
+
+### Health Check
+GET {{baseUrl}}/health
+Authorization: Bearer {{accessToken}}
