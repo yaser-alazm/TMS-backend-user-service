@@ -25,7 +25,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "username": "yaser-az",
+  "username": "yaser-alazm",
   "password": "Password123!"
 }
 
@@ -74,7 +74,7 @@ Content-Type: application/json
 
 {
   "username": "yaser-alazm",
-  "email": "yaser2@example.com",
+  "email": "yaser@example.com",
   "password": "Password123!",
   "firstName": "Yaser",
   "lastName": "Alazm",
