@@ -1,5 +1,6 @@
 ### Variables
-@baseUrl = http://tms.dev/api/user
+# @baseUrl = http://tms.dev/api/user
+@baseUrl = http://localhost:4001
 @accessToken = {{login.response.body.access_token}}
 
 ###
@@ -12,20 +13,23 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "username": "yaser-az",
+  "username": "yaser-alazm",
   "email": "yaser@example.com",
   "password": "Password123!",
   "firstName": "Yaser",
-  "lastName": "Alazm"
+  "lastName": "Alazm",
+  "roles": ["admin"]
 }
 
 ### Login
+## usernames: admin, testuser, yaser-az
+## passwords: Password123!
 # @name login
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "username": "yaser-alazm",
+  "username": "yaser-az",
   "password": "Password123!"
 }
 
@@ -64,7 +68,7 @@ GET {{baseUrl}}/
 Authorization: Bearer {{accessToken}}
 
 ### Get User by ID
-GET {{baseUrl}}/a7137dca-be78-4b4f-a8c4-2061d2f45d4a
+GET {{baseUrl}}/2f23ef01-5ca4-462a-be6c-248eaf9be959
 Authorization: Bearer {{accessToken}}
 
 ### Create New User
@@ -73,22 +77,23 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "username": "yaser-alazm",
-  "email": "yaser@example.com",
+  "username": "john-doe",
+  "email": "john.doe@example.com",
   "password": "Password123!",
-  "firstName": "Yaser",
-  "lastName": "Alazm",
-  "roles": ["admin"]
+  "firstName": "John",
+  "lastName": "Doe",
+  "roles": ["user"]
 }
 
 ### Update User
-PUT {{baseUrl}}/a7137dca-be78-4b4f-a8c4-2061d2f45d4a
+PUT {{baseUrl}}/a01ad4d9-f830-42cf-9d91-62c5a5d48d2f
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "email": "yaser.alazm@example.com",
-  "firstName": "Yasser"
+  "username": "yaser-alazm",
+  "firstName": "Yasser",
+  "roles": ["admin"]
 }
 
 ### Delete User
@@ -96,5 +101,5 @@ DELETE {{baseUrl}}/1234-5678-9012
 Authorization: Bearer {{accessToken}}
 
 ### Health Check
-GET {{baseUrl}}/health
+GET {{baseUrl}}/hello
 Authorization: Bearer {{accessToken}}
