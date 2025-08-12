@@ -43,6 +43,19 @@ async function main() {
     },
   });
 
+  await prisma.user.create({
+    data: {
+      username: 'yaser-az',
+      email: 'yaser@tms.dev',
+      password: hashedPassword,
+      firstName: 'Yaser',
+      lastName: 'Alazm',
+      roles: {
+        connect: [{ name: 'admin' }],
+      },
+    },
+  });
+
   console.log('Database seeded successfully');
 }
 
