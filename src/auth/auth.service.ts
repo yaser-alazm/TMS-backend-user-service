@@ -13,6 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
 import { JwtPayload, UserWithRelations, TokenResponse } from './types';
+import { CreateUserDto } from '@yatms/common';
 
 @Injectable()
 export class AuthService {
@@ -46,7 +47,7 @@ export class AuthService {
       const user = await this.usersService.create({
         ...registerDto,
         roles: ['user'], // Default role
-      });
+      } as CreateUserDto);
 
       // Generate tokens
       const tokens = await this.generateTokens(user);
