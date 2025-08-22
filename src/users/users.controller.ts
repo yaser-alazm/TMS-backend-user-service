@@ -7,26 +7,47 @@ import {
   Put,
   Delete,
   Query,
-  UseGuards,
+  UsePipes,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  UserFilterDto,
+  createUserSchema,
+  updateUserSchema,
+  userFilterSchema,
+  createZodValidationPipe,
+  VehicleFilterDto,
+} from '@yatms/common';
+import { VehicleDataRequestService } from '../events/vehicle-data-request.service';
 
-@Controller()
-@UseGuards(JwtAuthGuard)
+@Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly vehicleDataRequestService: VehicleDataRequestService,
+  ) {}
+
+  @Get('health')
+  health() {
+    return {
+      status: 'ok',
+      service: 'user-service',
+      timestamp: new Date().toISOString(),
+    };
+  }
 
   @Post()
+  @UsePipes(createZodValidationPipe(createUserSchema))
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @Get()
-  findAll(@Query('skip') skip?: number, @Query('take') take?: number) {
-    return this.usersService.findAll(skip, take);
+  @UsePipes(createZodValidationPipe(userFilterSchema))
+  findAll(@Query() filterDto: UserFilterDto) {
+    return this.usersService.findAll(filterDto);
   }
 
   @Get(':id')
@@ -35,6 +56,7 @@ export class UsersController {
   }
 
   @Put(':id')
+  @UsePipes(createZodValidationPipe(updateUserSchema))
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
@@ -42,5 +64,17 @@ export class UsersController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Get(':id/vehicles')
+  async getUserVehicles(@Param('id') userId: string) {
+    // Verify user exists first
+    await this.usersService.findOne(userId);
+    return this.vehicleDataRequestService.fetchVehiclesByOwner(userId);
+  }
+
+  @Get('vehicles/all')
+  async getAllVehicles(@Query() filterDto: VehicleFilterDto) {
+    return this.vehicleDataRequestService.fetchAllVehicles(filterDto);
   }
 }
