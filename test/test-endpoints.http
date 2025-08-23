@@ -72,7 +72,7 @@ GET {{baseUrl}}/2f23ef01-5ca4-462a-be6c-248eaf9be959
 Authorization: Bearer {{accessToken}}
 
 ### Create New User
-POST {{baseUrl}}/
+POST {{baseUrl}}/users
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 

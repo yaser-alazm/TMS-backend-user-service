@@ -4,13 +4,22 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UserEventService } from '../events/user-event.service';
 import * as bcrypt from 'bcrypt';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  UserCreatedDto,
+  UserFilterDto,
+} from '@yatms/common';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userEventService: UserEventService,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     const { password, roles = [], ...userData } = createUserDto;
@@ -48,7 +57,7 @@ export class UsersService {
     );
 
     // Create user with roles
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         ...userData,
         password: hashedPassword,
@@ -61,26 +70,68 @@ export class UsersService {
         permissions: true,
       },
     });
+
+    // Publish event
+    const eventUser: UserCreatedDto = {
+      ...user,
+      roles: user.roles.map((role) => role.name),
+    };
+    await this.userEventService.publishUserCreated(eventUser);
+
+    return user;
   }
 
-  async findAll(skip = 0, take = 10) {
-    return this.prisma.user.findMany({
-      skip,
-      take,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        lastLogin: true,
-        roles: true,
-        permissions: true,
+  async findAll(filterDto: UserFilterDto) {
+    const { page, limit, search, roles, isActive, sortBy, sortOrder } =
+      filterDto;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.UserWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { username: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (roles?.length) {
+      where.roles = {
+        some: { name: { in: roles } },
+      };
+    }
+
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        include: { roles: true, permissions: true },
+        orderBy: { [sortBy]: sortOrder },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    // Remove passwords from response
+    const usersWithoutPasswords = users.map(({ password: _, ...user }) => user);
+
+    return {
+      users: usersWithoutPasswords,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1,
       },
-    });
+    };
   }
 
   async findOne(id: string) {
@@ -151,7 +202,7 @@ export class UsersService {
       };
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
         ...updateData,
@@ -162,14 +213,24 @@ export class UsersService {
         permissions: true,
       },
     });
+
+    // Publish event
+    await this.userEventService.publishUserUpdated(id, updateUserDto);
+
+    return updatedUser;
   }
 
   async remove(id: string) {
     // Check if user exists
     await this.findOne(id);
 
-    return this.prisma.user.delete({
+    const user = await this.prisma.user.delete({
       where: { id },
     });
+
+    // Publish event
+    await this.userEventService.publishUserDeleted(id);
+
+    return user;
   }
 }
