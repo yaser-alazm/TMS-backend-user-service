@@ -50,8 +50,6 @@ export class UserDataRequestConsumer implements OnModuleInit {
                 sortOrder: 'desc',
               });
 
-              console.log({ usersResult });
-
               // Send success response
               await this.kafkaService.publishEvent('user-responses', {
                 eventId: uuidv4(),

@@ -16,8 +16,11 @@ export class VehicleDataRequestService {
   >();
 
   constructor(private readonly kafkaService: KafkaService) {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.setupResponseConsumer();
+    this.setupResponseConsumer().catch((error) => {
+      this.logger.error(
+        `Failed to setup vehicle response consumer: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
   }
 
   async fetchAllVehicles(filterDto: VehicleFilterDto) {

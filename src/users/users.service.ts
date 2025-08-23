@@ -12,6 +12,7 @@ import {
   UserCreatedDto,
   UserFilterDto,
 } from '@yatms/common';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -69,7 +70,6 @@ export class UsersService {
         permissions: true,
       },
     });
-    console.log('User created:', user);
 
     // Publish event
     const eventUser: UserCreatedDto = {
@@ -86,7 +86,7 @@ export class UsersService {
       filterDto;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, any> = {};
+    const where: Prisma.UserWhereInput = {};
 
     if (search) {
       where.OR = [
