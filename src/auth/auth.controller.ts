@@ -50,7 +50,22 @@ export class AuthController {
   }
 
   @Post('register')
-  register(@Body() userData: CreateUserDto) {
-    return this.authService.register(userData);
+  async register(
+    @Body() userData: CreateUserDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.register(userData);
+
+    const { accessToken, ...responseData } = result;
+
+    response.cookie('auth_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 3600000,
+      path: '/',
+    });
+
+    return responseData;
   }
 }

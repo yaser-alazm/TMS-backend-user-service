@@ -45,8 +45,15 @@ export class AuthService {
     };
   }
 
-  async register(credentials: CreateUserDto): Promise<AuthResponse> {
+  async register(
+    credentials: CreateUserDto,
+  ): Promise<AuthResponse & { accessToken: string; refreshToken: string }> {
     const user = await this.usersService.create(credentials);
+
+    const payload = this.createJwtPayload(user);
+    const token = this.jwtService.sign(payload);
+
+    const refreshToken = await this.generateRefreshToken(user.id);
 
     return {
       user: {
@@ -54,6 +61,8 @@ export class AuthService {
         email: user.email,
         roles: user.roles.map((role) => role.name),
       },
+      refreshToken: refreshToken.token,
+      accessToken: token,
     };
   }
 
