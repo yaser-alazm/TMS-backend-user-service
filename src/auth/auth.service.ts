@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
@@ -14,7 +13,6 @@ import {
 } from '@yatms/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Response } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -28,23 +26,13 @@ export class AuthService {
 
   async login(
     credentials: LoginDto,
-    @Res({ passthrough: true }) response: Response,
-  ): Promise<AuthResponse> {
+  ): Promise<AuthResponse & { accessToken: string; refreshToken: string }> {
     const user = await this.validateUser(credentials);
     const payload = this.createJwtPayload(user);
     const token = this.jwtService.sign(payload);
 
     // Generate refresh token
     const refreshToken = await this.generateRefreshToken(user.id);
-
-    // Set HttpOnly cookie
-    response.cookie('auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 3600000,
-      path: '/',
-    });
 
     return {
       user: {
@@ -53,6 +41,7 @@ export class AuthService {
         roles: user.roles.map((role) => role.name),
       },
       refreshToken: refreshToken.token,
+      accessToken: token,
     };
   }
 
@@ -70,48 +59,23 @@ export class AuthService {
 
   async refreshToken(
     refreshTokenStr: string | undefined,
-    @Res({ passthrough: true }) response: Response,
-  ): Promise<AuthResponse> {
-    // Validate refresh token exists
+  ): Promise<AuthResponse & { accessToken: string; refreshToken: string }> {
     if (!refreshTokenStr) {
       throw new UnauthorizedException('Refresh token is required');
     }
 
     try {
-      // Find the refresh token in the database
       const refreshTokenRecord = await this.prisma.refreshToken.findUnique({
-        where: {
-          token: refreshTokenStr,
-        },
-        include: {
-          user: {
-            include: {
-              roles: true,
-              permissions: true,
-            },
-          },
-        },
+        where: { token: refreshTokenStr },
+        include: { user: { include: { roles: true, permissions: true } } },
       });
 
-      // Check if token exists and is not expired
       if (!refreshTokenRecord || refreshTokenRecord.expiresAt < new Date()) {
         throw new UnauthorizedException('Invalid or expired refresh token');
       }
 
-      // Create new JWT payload and token
       const payload = this.createJwtPayload(refreshTokenRecord.user);
       const newAccessToken = this.jwtService.sign(payload);
-
-      // Set new access token as HttpOnly cookie
-      response.cookie('auth_token', newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 3600000, // 1 hour
-        path: '/',
-      });
-
-      // Generate new refresh token (token rotation for security)
       const newRefreshToken = await this.rotateRefreshToken(
         refreshTokenRecord.id,
       );
@@ -123,11 +87,10 @@ export class AuthService {
           roles: refreshTokenRecord.user.roles.map((role) => role.name),
         },
         refreshToken: newRefreshToken.token,
+        accessToken: newAccessToken,
       };
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
+      if (error instanceof UnauthorizedException) throw error;
       throw new UnauthorizedException('Failed to refresh token');
     }
   }
