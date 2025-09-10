@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UsePipes,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
@@ -19,10 +20,12 @@ import {
   userFilterSchema,
   createZodValidationPipe,
   VehicleFilterDto,
+  AuthGuard,
 } from '@yatms/common';
 import { VehicleDataRequestService } from '../events/vehicle-data-request.service';
 
 @Controller('users')
+@UseGuards(AuthGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
