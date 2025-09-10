@@ -106,7 +106,6 @@ Authorization: Bearer {{accessToken}}
 
 ### Health Check
 GET {{baseUrl}}/users/health
-Authorization: Bearer {{accessToken}}
 
 ### Health Check (public)
 GET {{baseUrl}}/hello
