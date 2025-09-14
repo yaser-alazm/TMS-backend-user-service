@@ -4,7 +4,6 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create roles
   await prisma.role.createMany({
     data: [
       { name: 'admin', description: 'Administrator role' },
@@ -14,7 +13,6 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // Create test users
   const hashedPassword = await bcrypt.hash('Password123!', 10);
 
   await prisma.user.create({
