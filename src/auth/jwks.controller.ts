@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { exportJWK, importSPKI, JWK } from 'jose'
+import { JWK } from 'jose'
 import { createPublicKey } from 'crypto'
 
 @Controller('.well-known')
