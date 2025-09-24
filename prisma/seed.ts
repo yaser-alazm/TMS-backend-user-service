@@ -15,44 +15,53 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash('Password123!', 10);
 
-  await prisma.user.create({
-    data: {
+  const users = [
+    {
       username: 'admin',
       email: 'admin@tms.dev',
       password: hashedPassword,
       firstName: 'Admin',
       lastName: 'User',
-      roles: {
-        connect: [{ name: 'admin' }],
-      },
+      role: 'admin',
     },
-  });
-
-  await prisma.user.create({
-    data: {
+    {
       username: 'testuser',
       email: 'test@tms.dev',
       password: hashedPassword,
       firstName: 'Test',
       lastName: 'User',
-      roles: {
-        connect: [{ name: 'user' }],
-      },
+      role: 'user',
     },
-  });
-
-  await prisma.user.create({
-    data: {
+    {
       username: 'yaser-az',
       email: 'yaser@tms.dev',
       password: hashedPassword,
       firstName: 'Yaser',
       lastName: 'Alazm',
-      roles: {
-        connect: [{ name: 'admin' }],
-      },
+      role: 'admin',
     },
-  });
+  ];
+
+  for (const userData of users) {
+    await prisma.user.upsert({
+      where: { username: userData.username },
+      update: {
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+      },
+      create: {
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        roles: {
+          connect: [{ name: userData.role }],
+        },
+      },
+    });
+  }
 
   console.log('Database seeded successfully');
 }
