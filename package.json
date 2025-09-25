@@ -1,8 +1,8 @@
 {
   "name": "user-service",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "User authentication and management service with JWT support",
+  "author": "Yaser Alazm",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
