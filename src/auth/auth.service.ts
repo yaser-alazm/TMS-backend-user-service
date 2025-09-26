@@ -132,19 +132,21 @@ export class AuthService {
       throw new NotFoundException('Refresh token not found');
     }
 
-    // Delete the old token
-    await this.prisma.refreshToken.delete({
-      where: { id: oldTokenId },
-    });
-
-    // Create a new refresh token
-    return this.prisma.refreshToken.create({
+    // Create a new refresh token first
+    const newToken = await this.prisma.refreshToken.create({
       data: {
         token: uuidv4(),
         userId: oldToken.userId,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       },
     });
+
+    // Delete the old token after creating the new one to avoid race conditions
+    await this.prisma.refreshToken.delete({
+      where: { id: oldTokenId },
+    });
+
+    return newToken;
   }
 
   private async validateUser(credentials: LoginDto) {

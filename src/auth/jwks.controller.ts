@@ -46,7 +46,6 @@ export class JwksController {
       return { keys: [jwk] }
     } catch (error) {
       console.error('Error processing JWT public key:', error)
-      console.error('PEM key:', publicKeyPem.substring(0, 100) + '...')
       return { keys: [] }
     }
   }

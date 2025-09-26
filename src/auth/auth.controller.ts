@@ -14,7 +14,7 @@ export class AuthController {
   ) {
     const result = await this.authService.login(credentials);
 
-    const { accessToken, ...responseData } = result;
+    const { accessToken, refreshToken, ...responseData } = result;
 
     response.cookie('auth_token', accessToken, {
       httpOnly: true,
@@ -24,7 +24,19 @@ export class AuthController {
       path: '/',
     });
 
-    return responseData;
+    response.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
+    });
+
+    return {
+      ...responseData,
+      accessToken,
+      refreshToken,
+    };
   }
 
   @Post('refresh')
@@ -36,7 +48,7 @@ export class AuthController {
       refreshData.refreshToken,
     );
 
-    const { accessToken, ...responseData } = result;
+    const { accessToken, refreshToken, ...responseData } = result;
 
     response.cookie('auth_token', accessToken, {
       httpOnly: true,
@@ -46,7 +58,19 @@ export class AuthController {
       path: '/',
     });
 
-    return responseData;
+    response.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
+    });
+
+    return {
+      ...responseData,
+      accessToken,
+      refreshToken,
+    };
   }
 
   @Post('register')
@@ -56,7 +80,7 @@ export class AuthController {
   ) {
     const result = await this.authService.register(userData);
 
-    const { accessToken, ...responseData } = result;
+    const { accessToken, refreshToken, ...responseData } = result;
 
     response.cookie('auth_token', accessToken, {
       httpOnly: true,
@@ -66,6 +90,18 @@ export class AuthController {
       path: '/',
     });
 
-    return responseData;
+    response.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
+    });
+
+    return {
+      ...responseData,
+      accessToken,
+      refreshToken,
+    };
   }
 }
