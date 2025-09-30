@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserEventService } from '../events/user-event.service';
+import { CacheService } from '../cache/cache.service';
 import * as bcrypt from 'bcrypt';
 import {
   CreateUserDto,
@@ -19,6 +20,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly userEventService: UserEventService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -70,6 +72,14 @@ export class UsersService {
         permissions: true,
       },
     });
+
+    // Cache the new user
+    const { password: _, ...userWithoutPassword } = user;
+    await this.cacheService.set(
+      this.cacheService.getUserCacheKey(user.id), 
+      userWithoutPassword, 
+      this.cacheService.TTL.USER_DATA
+    );
 
     // Publish event
     const eventUser: UserCreatedDto = {
@@ -135,6 +145,15 @@ export class UsersService {
   }
 
   async findOne(id: string) {
+    // Try cache first
+    const cacheKey = this.cacheService.getUserCacheKey(id);
+    const cachedUser = await this.cacheService.get(cacheKey);
+    
+    if (cachedUser) {
+      return cachedUser;
+    }
+
+    // Fetch from database
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
@@ -147,10 +166,23 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
+    // Cache the result (without password)
+    const { password: _, ...userWithoutPassword } = user;
+    await this.cacheService.set(cacheKey, userWithoutPassword, this.cacheService.TTL.USER_DATA);
+
     return user;
   }
 
   async findByUsername(username: string) {
+    // Try cache first
+    const cacheKey = this.cacheService.getUserByUsernameCacheKey(username);
+    const cachedUser = await this.cacheService.get(cacheKey);
+    
+    if (cachedUser) {
+      return cachedUser;
+    }
+
+    // Fetch from database
     const user = await this.prisma.user.findUnique({
       where: { username },
       include: {
@@ -162,6 +194,10 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with username ${username} not found`);
     }
+
+    // Cache the result (without password)
+    const { password: _, ...userWithoutPassword } = user;
+    await this.cacheService.set(cacheKey, userWithoutPassword, this.cacheService.TTL.USER_DATA);
 
     return user;
   }
@@ -214,6 +250,9 @@ export class UsersService {
       },
     });
 
+    // Invalidate cache
+    await this.invalidateUserCache(id, updatedUser);
+
     // Publish event
     await this.userEventService.publishUserUpdated(id, updateUserDto);
 
@@ -228,9 +267,39 @@ export class UsersService {
       where: { id },
     });
 
+    // Invalidate cache
+    await this.invalidateUserCache(id, user);
+
     // Publish event
     await this.userEventService.publishUserDeleted(id);
 
     return user;
+  }
+
+  private async invalidateUserCache(userId: string, user?: any) {
+    try {
+      // Invalidate user cache keys
+      await this.cacheService.del(this.cacheService.getUserCacheKey(userId));
+      
+      if (user) {
+        // Invalidate username and email cache keys
+        if (user.username) {
+          await this.cacheService.del(this.cacheService.getUserByUsernameCacheKey(user.username));
+        }
+        if (user.email) {
+          await this.cacheService.del(this.cacheService.getUserByEmailCacheKey(user.email));
+        }
+      }
+
+      // Invalidate role and permission caches
+      await this.cacheService.del(this.cacheService.getUserRolesCacheKey(userId));
+      await this.cacheService.del(this.cacheService.getUserPermissionsCacheKey(userId));
+
+      // Invalidate search caches (pattern-based)
+      await this.cacheService.delPattern('user:search:*');
+    } catch (error) {
+      // Log error but don't fail the operation
+      console.error('Error invalidating user cache:', error);
+    }
   }
 }
