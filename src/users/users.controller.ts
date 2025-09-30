@@ -9,6 +9,7 @@ import {
   Query,
   UsePipes,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
@@ -20,12 +21,12 @@ import {
   userFilterSchema,
   createZodValidationPipe,
   VehicleFilterDto,
-  AuthGuard,
 } from '@yatms/common';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { VehicleDataRequestService } from '../events/vehicle-data-request.service';
 
 @Controller('users')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
@@ -39,6 +40,11 @@ export class UsersController {
       service: 'user-service',
       timestamp: new Date().toISOString(),
     };
+  }
+
+  @Get('me')
+  getCurrentUser(@Request() req: any) {
+    return req.user;
   }
 
   @Post()

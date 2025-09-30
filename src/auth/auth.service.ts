@@ -28,7 +28,8 @@ export class AuthService {
     credentials: LoginDto,
   ): Promise<AuthResponse & { accessToken: string; refreshToken: string }> {
     const user = await this.validateUser(credentials);
-    const payload = this.createJwtPayload(user);
+    const { password: _, ...safeUser } = user;
+    const payload = this.createJwtPayload(safeUser);
     const token = this.jwtService.sign(payload);
 
     // Generate refresh token
@@ -83,7 +84,8 @@ export class AuthService {
         throw new UnauthorizedException('Invalid or expired refresh token');
       }
 
-      const payload = this.createJwtPayload(refreshTokenRecord.user);
+      const { password: _, ...safeUser } = refreshTokenRecord.user;
+      const payload = this.createJwtPayload(safeUser);
       const newAccessToken = this.jwtService.sign(payload);
       const newRefreshToken = await this.rotateRefreshToken(
         refreshTokenRecord.id,
@@ -149,8 +151,16 @@ export class AuthService {
     return newToken;
   }
 
-  private async validateUser(credentials: LoginDto) {
-    const user = await this.usersService.findByUsername(credentials.username);
+  private async validateUser(credentials: LoginDto): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { username: credentials.username },
+      include: { roles: true, permissions: true },
+    });
+    
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    
     const isPasswordValid = await bcrypt.compare(
       credentials.password,
       user.password,

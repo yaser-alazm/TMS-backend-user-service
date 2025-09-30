@@ -16,11 +16,11 @@ export class AuthController {
 
     const { accessToken, refreshToken, ...responseData } = result;
 
-    response.cookie('auth_token', accessToken, {
+    response.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 3600000,
+      maxAge: 60 * 60 * 1000,
       path: '/',
     });
 
@@ -34,8 +34,6 @@ export class AuthController {
 
     return {
       ...responseData,
-      accessToken,
-      refreshToken,
     };
   }
 
@@ -50,11 +48,11 @@ export class AuthController {
 
     const { accessToken, refreshToken, ...responseData } = result;
 
-    response.cookie('auth_token', accessToken, {
+    response.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 3600000,
+      maxAge: 60 * 60 * 1000,
       path: '/',
     });
 
@@ -68,8 +66,6 @@ export class AuthController {
 
     return {
       ...responseData,
-      accessToken,
-      refreshToken,
     };
   }
 
@@ -82,11 +78,11 @@ export class AuthController {
 
     const { accessToken, refreshToken, ...responseData } = result;
 
-    response.cookie('auth_token', accessToken, {
+    response.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 3600000,
+      maxAge: 60 * 60 * 1000,
       path: '/',
     });
 
@@ -100,8 +96,30 @@ export class AuthController {
 
     return {
       ...responseData,
-      accessToken,
-      refreshToken,
+    };
+  }
+
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) response: Response) {
+    // Clear HTTP-only cookies
+    response.cookie('access_token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    });
+
+    response.cookie('refresh_token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    });
+
+    return {
+      message: 'Logged out successfully',
     };
   }
 }
