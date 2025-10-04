@@ -152,10 +152,19 @@ export class AuthService {
   }
 
   private async validateUser(credentials: LoginDto): Promise<any> {
-    const user = await this.prisma.user.findUnique({
+    // Try to find by username first, then by email if username fails
+    let user = await this.prisma.user.findUnique({
       where: { username: credentials.username },
       include: { roles: true, permissions: true },
     });
+    
+    if (!user) {
+      // If not found by username, try by email
+      user = await this.prisma.user.findUnique({
+        where: { email: credentials.username },
+        include: { roles: true, permissions: true },
+      });
+    }
     
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
