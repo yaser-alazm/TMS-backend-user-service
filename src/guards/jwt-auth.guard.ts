@@ -7,15 +7,7 @@ import {
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
-
-interface CustomJWTPayload {
-  userId: string;
-  email: string;
-  roles: string[];
-  iat: number;
-  exp: number;
-  iss: string;
-}
+import { CustomJWTPayload } from '@yatms/common';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
